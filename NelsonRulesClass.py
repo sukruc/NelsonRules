@@ -128,8 +128,11 @@ class NelsonRules:
                     axs[i].axhline(mean+std,color='k',linestyle='--',label=r'$\sigma$', linewidth=.5)
                     axs[i].axhline(mean-std,color='k',linestyle='--', linewidth=.5)
             for i in range(len(columns)):
+                if i != range(len(columns))[-1]:
+                    axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.05),fancybox=True,ncol=5)
+                else:
                     axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
-            fig.savefig(prefix+'.png',format='png')
+            fig.savefig(prefix+'_'+var_name+'.png',format='png')
             plt.close()
             return
 
@@ -146,7 +149,7 @@ class NelsonRules:
                 axs.plot(data.ix[:, 0][(data.ix[:, i+1] == True)], ls='', marker=marker[i], markersize=20, label=columns[i])
 
             plt.legend()
-            fig.savefig(prefix+'.png',format='png')
+            fig.savefig(prefix+'_'+var_name+'.png',format='png')
             plt.close()
 
             return
@@ -157,9 +160,10 @@ class NelsonRules:
         Returns a DataFrame with labels for each data point for given rules.
         True indicates violation
         Example:
-        >>>rule_table,fig = nelsonRules.apply_rules(df['col'],var_name=col)
+        >>>rule_table,fig = nelsonRules.apply_rules(df['col'],var_name='col',prefix='save_filename_')
         see NelsonRules.set_constant() for changing rule constants.
         '''
+        assert(type(original)!=pd.DataFrame),'original must be a pandas series object'
         if (original.dtype=='O'): # object
             print('----> Error: variable [%s] is Object' % var_name)
             return(pd.DataFrame(),plt.figure())
@@ -180,7 +184,7 @@ class NelsonRules:
         for i in range(len(rules)):
             df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[i+1])
 
-        self.plot_rules(df, chart_type,var_name=var_name,prefix)
+        self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix)
 
         return df
 
