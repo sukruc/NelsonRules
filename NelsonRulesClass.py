@@ -182,7 +182,8 @@ class NelsonRules:
             rules = [rule_handle[i-1] for i in rule_nums]
         df = pd.DataFrame(original)
         for i in range(len(rules)):
-            df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[i+1])
+            df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[rule_handle.index(rules[i])+1])
+            
 
         self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix)
 
