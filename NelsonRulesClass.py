@@ -102,8 +102,8 @@ class NelsonRules:
     def plot_rules(self,data,chart_type=1,var_name='variable',prefix='rules_'):
         if chart_type == 1:
             columns = data.columns[1:]
-            fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20))
-            fig.subplots_adjust(hspace=1, wspace=.5)
+            fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20),sharex=True, sharey=False)
+            fig.subplots_adjust(hspace=.5, wspace=.5)
             plt.suptitle('Nelson Rules for '+var_name)
             legends={}
 
@@ -130,7 +130,8 @@ class NelsonRules:
             for i in range(len(columns)):
                     axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
             fig.savefig(prefix+'.png',format='png')
-            return fig
+            plt.close()
+            return
 
         elif chart_type == 2:
             # plot_num = len(data.columns[1:])
@@ -146,11 +147,12 @@ class NelsonRules:
 
             plt.legend()
             fig.savefig(prefix+'.png',format='png')
+            plt.close()
 
-            return fig
+            return
 
 
-    def apply_rules(self,original=None, rules='all', chart_type=1,var_name=''):
+    def apply_rules(self,original=None, rules='all', chart_type=1,var_name='',prefix=''):
         '''Applies selected rules(default=all) to a given Pandas series object
         Returns a DataFrame with labels for each data point for given rules.
         True indicates violation
@@ -178,7 +180,7 @@ class NelsonRules:
         for i in range(len(rules)):
             df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[i+1])
 
-        fig = self.plot_rules(df, chart_type,var_name=var_name)
+        fig = self.plot_rules(df, chart_type,var_name=var_name,prefix)
 
         return df, fig
 
