@@ -7,14 +7,14 @@ class NelsonRules:
 
     def __init__(self):
         self.rule_dict={1:3,2:9,3:6,4:14,5:2,6:4,7:15,8:8}
-        self.rule_expl={'1':'Outlier('+str(self.rule_dict[1])+'$\sigma$)',
-                        '2':'Prolonged bias',
-                        '3':'Trend exists',
-                        '4':'Heavy oscillation',
-                        '5':'Mediumly out of control',
-                        '6':'Consequent samples on the same side',
-                        '7':'Very small variation',
-                        '8':'Sudden and high deviation'}
+        self.rule_expl={'1':' - Outlier('+str(self.rule_dict[1])+'$\sigma$)',
+                        '2':' - Prolonged bias',
+                        '3':' - Trend exists',
+                        '4':' - Heavy oscillation',
+                        '5':' - Mediumly out of control',
+                        '6':' - Consequent samples on the same side',
+                        '7':' - Very small variation',
+                        '8':' - Sudden and high deviation'}
         self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8']
         # TODO: Pass rule numbers to initialize NelsonRules instance
         # TODO: Add a new attribute: self.rules
@@ -104,7 +104,7 @@ class NelsonRules:
             columns = data.columns[1:]
             fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20),sharex=True, sharey=False)
             fig.subplots_adjust(hspace=.5, wspace=.5)
-            plt.suptitle('Nelson Rules for '+var_name)
+            plt.suptitle(var_name)
             legends={}
 
             #axs = axs.ravel()
@@ -183,7 +183,7 @@ class NelsonRules:
         df = pd.DataFrame(original)
         for i in range(len(rules)):
             df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[rule_handle.index(rules[i])+1])
-            
+
 
         self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix)
 
