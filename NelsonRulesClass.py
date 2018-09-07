@@ -180,9 +180,9 @@ class NelsonRules:
         for i in range(len(rules)):
             df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[i+1])
 
-        fig = self.plot_rules(df, chart_type,var_name=var_name,prefix)
+        self.plot_rules(df, chart_type,var_name=var_name,prefix)
 
-        return df, fig
+        return df
 
 
     def rule1(self,original, mean=None, sigma=None,K=3):
