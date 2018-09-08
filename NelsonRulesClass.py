@@ -15,6 +15,7 @@ class NelsonRules:
                         '6':' - Consequent samples on the same side',
                         '7':' - Very small variation',
                         '8':' - Sudden and high deviation'}
+                        # TODO: add rule 9: identift flat lines
         self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8']
         # TODO: Pass rule numbers to initialize NelsonRules instance
         # TODO: Add a new attribute: self.rules
@@ -99,7 +100,7 @@ class NelsonRules:
         return fig
 
         # TODO: remove limit lines except for rule1
-    def plot_rules(self,data,chart_type=1,var_name='variable',prefix='rules_'):
+    def plot_rules(self,data,chart_type=1,run_type='apply',var_name='variable',prefix='rules_',K_list=None):
         if chart_type == 1:
             columns = data.columns[1:]
             fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20),sharex=True, sharey=False)
@@ -113,8 +114,15 @@ class NelsonRules:
                axs[i].plot(data.ix[:, 0],label='Data')
                axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',label='Violations')
                #axs[i].set_title(columns[i]+' K='+str(self.rule_dict[i+1])) uncomment to activate K in title per rule
+               axs[i].legend()
                print(columns[i])
-               axs[i].set_title(columns[i]+' '+self.rule_expl[str(self.__glob_rules_.index(columns[i])+1)])
+
+               if run_type == 'apply':
+                   axs[i].set_title(columns[i]+' '+self.rule_expl[str(self.__glob_rules_.index(columns[i])+1)])
+               if run_type == 'search':
+                    axs[i].set_title('K = '+str(K_list[i]))
+
+
                mean = data.ix[:,0].mean()
                std = data.ix[:,0].std()
                axs[i].axhline(mean,color='g',label=r'$\mu$', linewidth=.3)
@@ -127,12 +135,13 @@ class NelsonRules:
                if columns[i] in ['rule6','rule7','rule8']:
                     axs[i].axhline(mean+std,color='k',linestyle='--',label=r'$\sigma$', linewidth=.5)
                     axs[i].axhline(mean-std,color='k',linestyle='--', linewidth=.5)
-            for i in range(len(columns)):
-                if i != range(len(columns))[-1]:
-                    axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.05),fancybox=True,ncol=5)
-                else:
-                    axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
-            fig.savefig(prefix+'_'+var_name+'.png',format='png')
+            if run_type == 'apply':
+                for i in range(len(columns)):
+                    if i != range(len(columns))[-1]:
+                        axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.05),fancybox=True,ncol=5)
+                    else:
+                        axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
+            fig.savefig(prefix+'_'+var_name+'.png',format='png',dpi=600)
             plt.close()
             return
 
@@ -452,3 +461,29 @@ class NelsonRules:
             figs[i].savefig(prefix+'rules_'+i+'.png',format='png')
             frames[i].to_csv(prefix+'frame_'+i+'.csv')
         plt.close('all')
+
+    def search_K(self,original,rule,K_list,plots=False,var_name='',prefix=''):
+        '''Searches for the optimal value of K for given rule'''
+        assert(type(original)!=pd.DataFrame),'original must be a pandas series object'
+        if (original.dtype=='O'): # object
+            print('----> Error: variable [%s] is Object' % var_name)
+            return(pd.DataFrame(),plt.figure())
+        if not original.ndim==1: # dim
+            print('----> Error: Dim [%s] is not 1' % var_name)
+            return(pd.DataFrame(),plt.figure())
+
+        mean = original.mean()
+        sigma = original.std()
+        rule_dict = self.rule_dict
+        rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4, self.rule5, self.rule6, self.rule7, self.rule8]
+
+
+        df = pd.DataFrame(original)
+        information_lost = {}
+        for i in range(len(K_list)):
+            df['K='+str(K_list[i])] = rule_handle[rule-1](original, mean, sigma, K=K_list[i])
+            information_lost['K='+str(K_list[i])] = df['K='+str(K_list[i])].sum()/len(df['K='+str(K_list[i])])
+        if plots==True:
+            self.plot_rules(df, chart_type=1,run_type='search',var_name=var_name,prefix=prefix,K_list=K_list)
+
+        return df,information_lost
