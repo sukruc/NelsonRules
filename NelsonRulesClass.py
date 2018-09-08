@@ -14,8 +14,9 @@ class NelsonRules:
                         '5':' - Mediumly out of control',
                         '6':' - Consequent samples on the same side',
                         '7':' - Very small variation',
-                        '8':' - Sudden and high deviation'}
-                        # TODO: add rule 9: identift flat lines
+                        '8':' - Sudden and high deviation',
+                        '9':' - Prolonged flatness'}
+                        # TODO: add rule 9: identify flat lines
         self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8']
         # TODO: Pass rule numbers to initialize NelsonRules instance
         # TODO: Add a new attribute: self.rules
@@ -437,6 +438,41 @@ class NelsonRules:
         results = self._clean_chunks(copy_original, results, segment_len)
 
         return results
+
+
+        # TODO: Add rule 9
+    '''def rule9(self,original, mean=None, sigma=None, K=16):
+        """Sixteen (or more) points in a row are on the same side of the mean."""
+        if mean is None:
+            mean = original.mean()
+
+        if sigma is None:
+            sigma = original.std()
+
+        copy_original = original
+        segment_len = K
+
+        side_of_mean = []
+        for i in range(len(copy_original)):
+            if copy_original[i] > mean:
+                side_of_mean.append(1)
+            else:
+                side_of_mean.append(-1)
+
+        chunks =self._sliding_chunker(side_of_mean, segment_len, 1)
+
+        results = []
+        for i in range(len(chunks)):
+            if chunks[i].sum() == segment_len or chunks[i].sum() == (-1 * segment_len):
+                results.append(True)
+            else:
+                results.append(False)
+
+        # clean up results
+        results = self._clean_chunks(copy_original, results, segment_len)
+
+        return results'''
+
 
     def main(self,original, prefix='',img_format='png'):
         """Accepts DataFrame as input and returns for every column in dataframe an image file of specified format,
