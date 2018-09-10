@@ -2,6 +2,7 @@ Updates to NelsonRules:
 
 -Rule 10 added to identify rapidly changing data
 -Rule 11 added to identify outliers by using Tukey's method
+-Detailed rule explanations
 
 
 ########################

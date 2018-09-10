@@ -13,16 +13,16 @@ class NelsonRules:
                         '4':' - Heavy oscillation',
                         '5':' - Mediumly out of control',
                         '6':' - Consequent samples on the same side',
-                        '7':' - Very small variation',
+                        '7':' - Very small variation (centered around mean)',
                         '8':' - Sudden and high deviation',
-                        '9':' - Prolonged flatness or constant',
+                        '9':' - Prolonged flatness or constant (independent of location)',
                         '10':' - Rapidly changing data',
                         '11':" - Tukey's Outlier"}
-                        # TODO: add rule 9: identify flat lines
+
         self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6',
                             'rule7','rule8', 'rule9','rule10','rule11']
-        # TODO: Pass rule numbers to initialize NelsonRules instance
-        # TODO: Add a new attribute: self.rules
+        # # IDEA: : Pass rule numbers to initialize NelsonRules instance
+        # # IDEA: : Add a new attribute: self.rules
         return
 
     def set_constant(self,rule_num,constant):
@@ -498,7 +498,7 @@ class NelsonRules:
         return results
 
 
-        # TODO: Add rule 9
+
     def rule9(self,original, mean=None,sigma=None,delta=0.001, K=14):
         """K (or more) points in a row follow a constant pattern."""
         if mean is None:
