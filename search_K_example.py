@@ -22,10 +22,10 @@ for col in data.columns:
     df[col],info_lost[col]=nr.search_K(data[col],
                                         var_name=col,
                                         rule=9,
-                                        K_list=range(8,22),
+                                        K_list=range(8,17),
                                         plots=True,
-                                        prefix='sK',
-                                        dpi=200) # Searches for K within range 8-22 for Rule 9, outputs plots
+                                        prefix='search_K',
+                                        dpi=200) # Searches for K within range 8-17 for Rule 9, outputs plots
     print(col)
 plt.close('all')
 

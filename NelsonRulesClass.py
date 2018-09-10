@@ -198,7 +198,7 @@ class NelsonRules:
                 axs[i].axhline(mean+std,color='k',linestyle='--',label=r'$\sigma$', linewidth=.5)
                 axs[i].axhline(mean-std,color='k',linestyle='--', linewidth=.5)
 
-        fig.savefig(prefix+'_'+var_name+'.png',format='png',dpi=dpi)
+        fig.savefig(prefix+'_'+var_name+'_'+'rule'+str(rule)+'.png',format='png',dpi=dpi)
         plt.close()
         return
 
