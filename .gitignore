@@ -5,3 +5,5 @@
 !search_K.png
 !apply_rules.png
 !rapid_change.png
+*.un~
+*.py~
