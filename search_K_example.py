@@ -14,10 +14,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 data = pd.read_csv('data.csv')
 
+info_lost={}
+df={}
+
 
 for col in data.columns:
-    nr.apply_rules(data[col],var_name=col,rules=[1,3,5,7])
+    df[col],info_lost[col]=nr.search_K(data[col],var_name=col,rule=2,K_list=range(8,22),plots=False) # Searches for K within range 8-22 for Rule 2, doesn't output plots
     print(col)
-
-
 plt.close('all')
