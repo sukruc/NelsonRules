@@ -1,5 +1,10 @@
 Updates to NelsonRules:
 
+-Rule 10 added to identify rapidly changing data
+-Rule 11 added to identify outliers by using Tukey's method
+
+
+########################
 -Rule 9 added to identify constant variables or prolonged bias independent of location,
 -plot functions for search_K and apply_rules seperated and simplified,
 -search_K plot expands in height according to number of K values

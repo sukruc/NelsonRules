@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 class NelsonRules:
 
     def __init__(self):
-        self.rule_dict={1:3,2:9,3:6,4:14,5:2,6:4,7:15,8:8,9:14}
+        self.rule_dict={1:3,2:9,3:6,4:14,5:2,6:4,7:15,8:8,9:14,10:9,11:1.5}
         self.rule_expl={'1':' - Outlier('+str(self.rule_dict[1])+'$\sigma$)',
                         '2':' - Prolonged bias',
                         '3':' - Trend exists',
@@ -15,9 +15,12 @@ class NelsonRules:
                         '6':' - Consequent samples on the same side',
                         '7':' - Very small variation',
                         '8':' - Sudden and high deviation',
-                        '9':' - Prolonged flatness or constant'}
+                        '9':' - Prolonged flatness or constant',
+                        '10':' - Rapidly changing data',
+                        '11':" - Tukey's Outlier"}
                         # TODO: add rule 9: identify flat lines
-        self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8', 'rule9']
+        self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6',
+                            'rule7','rule8', 'rule9','rule10','rule11']
         # TODO: Pass rule numbers to initialize NelsonRules instance
         # TODO: Add a new attribute: self.rules
         return
@@ -104,7 +107,8 @@ class NelsonRules:
     def plot_rules(self,data,chart_type=1,var_name='variable',prefix='rules_',dpi=300):
         if chart_type == 1:
             columns = data.columns[1:]
-            fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20),sharex=True, sharey=False)
+            fig, axs = plt.subplots(len(columns), 1, figsize=(20,2.5*data.shape[1] ),
+                                    sharex=True, sharey=False) # figure height is adjusted to number of plots
             fig.subplots_adjust(hspace=.5, wspace=.5)
             plt.suptitle(var_name)
             legends={}
@@ -202,7 +206,9 @@ class NelsonRules:
         plt.close()
         return
 
-    def apply_rules(self,original=None, rules='all', chart_type=1,var_name='',prefix='',plots=True,dpi=300):
+    def apply_rules(self,original=None, rules='all', chart_type=1,
+                    var_name='',prefix='',plots=True,dpi=300,delta=0.001,p25=None,
+                    p75 = None, tukey_thr=1.5,out_thr_grad=3.):
         '''Applies selected rules(default=all) to a given Pandas series object
         Returns a DataFrame with labels for each data point for given rules.
         True indicates violation
@@ -222,7 +228,8 @@ class NelsonRules:
         sigma = original.std()
         rule_dict = self.rule_dict
         rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4,
-                        self.rule5, self.rule6, self.rule7, self.rule8, self.rule9]
+                        self.rule5, self.rule6, self.rule7, self.rule8,
+                        self.rule9,self.rule10, self.rule11]
         rule_nums = rules
         if rules == 'all':
             rules = rule_handle
@@ -230,8 +237,21 @@ class NelsonRules:
             rules = [rule_handle[i-1] for i in rule_nums]
         df = pd.DataFrame(original)
         for i in range(len(rules)):
-            df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[rule_handle.index(rules[i])+1])
+            if rules[i].__name__ != 'rule10' or rules[i].__name__ != 'rule11':
+                df[rules[i].__name__] = rules[i](original, mean, sigma,
+                                        K=rule_dict[rule_handle.index(rules[i])+1])
 
+            elif rules[i].__name__ == 'rule11':
+                df[rules[i].__name__] = rules[i](original, mean, sigma,
+                                        delta=delta,
+                                        K=rule_dict[rule_handle.index(rules[i])+1],
+                                        p25=p25,p75=p75)
+
+            else:
+                df[rules[i].__name__] = rules[i](original, mean, sigma,
+                                                delta=delta,
+                                                K=rule_dict[rule_handle.index(rules[i])+1],
+                                                out_thr_grad=out_thr_grad)
         if plots:
             self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix,dpi=dpi)
 
@@ -505,6 +525,57 @@ class NelsonRules:
 
         return results
 
+    def rule10(self, original, mean=None, sigma=None,K=9,out_thr_grad=2.5):
+        '''Datapoints rapidly rise and fall within K(or less) datapoints.
+        Identifies spikes and rapid changes in data.'''
+        x_der = np.gradient(original[~original.isna()])
+        x_der_bot = np.mean(x_der) - np.std(x_der)*out_thr_grad
+        x_der_top = np.mean(x_der) + np.std(x_der)*out_thr_grad
+
+        segment_len = K
+        copy_original = original
+        gradient = np.gradient(copy_original)
+        chunks = self._sliding_chunker(gradient, segment_len, 1)
+
+
+        results = []
+        for i in range(len(chunks)):
+            if any(i > x_der_top for i in chunks[i]) and any(i < x_der_bot for i in chunks[i]) :
+                results.append(True)
+            else:
+                results.append(False)
+
+        # fill incomplete chunks with False
+        results = self._clean_chunks(copy_original, results, segment_len)
+
+        return results
+
+    def rule11(self,original,mean=None,sigma=None,p25=None,p75=None,K=1.5):
+        '''Identifies data points matching Tukey's outlier definition, that is
+        1.5 (or any user defined coefficient) times interquartile range far away
+        from 25th or 75th percentiles.
+        Parameters:
+        original: data
+        p25: 25th percentile (if not given, calculated from data)
+        p75: 75th percentile (if not given, calculated from data)
+        K: Interquartile distance coefficient, default 1.5'''
+        if p25 is None:
+            p25 = np.percentile(original[~original.isna()],25)
+            #print(p25)
+        if p75 is None:
+            p75 = np.percentile(original[~original.isna()],75)
+            #print(p75)
+        #print(K)
+
+        IQR = p75 - p25
+        #print(IQR)
+        outliers_Tukey_top = p75 + K * IQR
+        outliers_Tukey_bot = p25 - K * IQR
+
+        results = (original > outliers_Tukey_top) |(original < outliers_Tukey_bot)
+
+        return results
+
 
     def main(self,original, prefix='',img_format='png'):
         """Accepts DataFrame as input and returns for every column in dataframe an image file of specified format,
@@ -544,7 +615,8 @@ class NelsonRules:
         sigma = original.std()
         rule_dict = self.rule_dict
         rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4,
-                        self.rule5, self.rule6, self.rule7, self.rule8, self.rule9]
+                        self.rule5, self.rule6, self.rule7, self.rule8,
+                        self.rule9, self.rule10, self.rule11]
 
 
         df = pd.DataFrame(original)

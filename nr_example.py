@@ -16,7 +16,7 @@ data = pd.read_csv('data.csv')
 
 
 for col in data.columns:
-    nr.apply_rules(data[col],var_name=col,rules=[1,3,5,9])
+    nr.apply_rules(data[col],var_name=col,rules=[10,11])
     print(col)
 
 
