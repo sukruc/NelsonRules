@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 class NelsonRules:
 
     def __init__(self):
-        self.rule_dict={1:3,2:9,3:6,4:14,5:2,6:4,7:15,8:8}
+        self.rule_dict={1:3,2:9,3:6,4:14,5:2,6:4,7:15,8:8,9:14}
         self.rule_expl={'1':' - Outlier('+str(self.rule_dict[1])+'$\sigma$)',
                         '2':' - Prolonged bias',
                         '3':' - Trend exists',
@@ -15,9 +15,9 @@ class NelsonRules:
                         '6':' - Consequent samples on the same side',
                         '7':' - Very small variation',
                         '8':' - Sudden and high deviation',
-                        '9':' - Prolonged flatness'}
+                        '9':' - Prolonged flatness or constant'}
                         # TODO: add rule 9: identify flat lines
-        self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8']
+        self.__glob_rules_= ['rule1','rule2','rule3','rule4','rule5','rule6','rule7','rule8', 'rule9']
         # TODO: Pass rule numbers to initialize NelsonRules instance
         # TODO: Add a new attribute: self.rules
         return
@@ -100,8 +100,8 @@ class NelsonRules:
 
         return fig
 
-        # TODO: remove limit lines except for rule1
-    def plot_rules(self,data,chart_type=1,run_type='apply',var_name='variable',prefix='rules_',K_list=None):
+        # removed limit lines except for rule1
+    def plot_rules(self,data,chart_type=1,var_name='variable',prefix='rules_',dpi=300):
         if chart_type == 1:
             columns = data.columns[1:]
             fig, axs = plt.subplots(len(columns), 1, figsize=(20, 20),sharex=True, sharey=False)
@@ -118,10 +118,10 @@ class NelsonRules:
                axs[i].legend()
                print(columns[i])
 
-               if run_type == 'apply':
-                   axs[i].set_title(columns[i]+' '+self.rule_expl[str(self.__glob_rules_.index(columns[i])+1)])
-               if run_type == 'search':
-                    axs[i].set_title('K = '+str(K_list[i]))
+               #if run_type == 'apply':
+               axs[i].set_title(columns[i]+' '+self.rule_expl[str(self.__glob_rules_.index(columns[i])+1)])
+               #if run_type == 'search':
+                    #axs[i].set_title('K = '+str(K_list[i]))
 
 
                mean = data.ix[:,0].mean()
@@ -136,12 +136,12 @@ class NelsonRules:
                if columns[i] in ['rule6','rule7','rule8']:
                     axs[i].axhline(mean+std,color='k',linestyle='--',label=r'$\sigma$', linewidth=.5)
                     axs[i].axhline(mean-std,color='k',linestyle='--', linewidth=.5)
-            if run_type == 'apply':
-                for i in range(len(columns)):
-                    if i != range(len(columns))[-1]:
-                        axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.05),fancybox=True,ncol=5)
-                    else:
-                        axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
+            #if run_type == 'apply':
+            for i in range(len(columns)):
+                if i != range(len(columns))[-1]:
+                    axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.03),fancybox=True,ncol=5)
+                else:
+                    axs[i].legend(loc='upper center', bbox_to_anchor=(.5,-.15),fancybox=True,ncol=5)
             fig.savefig(prefix+'_'+var_name+'.png',format='png',dpi=600)
             plt.close()
             return
@@ -164,8 +164,45 @@ class NelsonRules:
 
             return
 
+    def plot_rules_search_K(self,data,var_name='variable',rule=None,prefix='rules_',K_list=None,dpi=300):
 
-    def apply_rules(self,original=None, rules='all', chart_type=1,var_name='',prefix=''):
+        columns = data.columns[1:]
+        fig, axs = plt.subplots(len(columns), 1, figsize=(20, 2.5*len(K_list)),sharex=True, sharey=False)
+        fig.subplots_adjust(hspace=.5, wspace=.5)
+        plt.suptitle(var_name+' - rule '+str(rule))
+        legends={}
+
+        #axs = axs.ravel()
+
+        for i in range(len(columns)):
+           axs[i].plot(data.ix[:, 0],label='Data')
+           axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',label='Violations')
+           #axs[i].set_title(columns[i]+' K='+str(self.rule_dict[i+1])) uncomment to activate K in title per rule
+           axs[i].legend()
+           print(columns[i])
+
+
+           axs[i].set_title('K = '+str(K_list[i]))
+
+
+           mean = data.ix[:,0].mean()
+           std = data.ix[:,0].std()
+           axs[i].axhline(mean,color='g',label=r'$\mu$', linewidth=.3)
+           if rule == 5:
+               axs[i].axhline(mean+std*2,color='b',linestyle='--',label=r'$2\sigma$', linewidth=.5)
+               axs[i].axhline(mean+std*-2,color='b',linestyle='--', linewidth=.5)
+           if rule == 1:
+                axs[i].axhline(mean+std*3,color='r',linestyle='--',label=r'$3\sigma$', linewidth=.7)
+                axs[i].axhline(mean+std*-3,color='r',linestyle='--', linewidth=.7)
+           if rule in [6,7,8]:
+                axs[i].axhline(mean+std,color='k',linestyle='--',label=r'$\sigma$', linewidth=.5)
+                axs[i].axhline(mean-std,color='k',linestyle='--', linewidth=.5)
+
+        fig.savefig(prefix+'_'+var_name+'.png',format='png',dpi=dpi)
+        plt.close()
+        return
+
+    def apply_rules(self,original=None, rules='all', chart_type=1,var_name='',prefix='',plots=True,dpi=300):
         '''Applies selected rules(default=all) to a given Pandas series object
         Returns a DataFrame with labels for each data point for given rules.
         True indicates violation
@@ -184,7 +221,8 @@ class NelsonRules:
         mean = original.mean()
         sigma = original.std()
         rule_dict = self.rule_dict
-        rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4, self.rule5, self.rule6, self.rule7, self.rule8]
+        rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4,
+                        self.rule5, self.rule6, self.rule7, self.rule8, self.rule9]
         rule_nums = rules
         if rules == 'all':
             rules = rule_handle
@@ -194,8 +232,8 @@ class NelsonRules:
         for i in range(len(rules)):
             df[rules[i].__name__] = rules[i](original, mean, sigma, K=rule_dict[rule_handle.index(rules[i])+1])
 
-
-        self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix)
+        if plots:
+            self.plot_rules(df, chart_type,var_name=var_name,prefix=prefix,dpi=dpi)
 
         return df
 
@@ -441,37 +479,31 @@ class NelsonRules:
 
 
         # TODO: Add rule 9
-    '''def rule9(self,original, mean=None, sigma=None, K=16):
-        """Sixteen (or more) points in a row are on the same side of the mean."""
+    def rule9(self,original, mean=None,sigma=None,delta=0.001, K=14):
+        """K (or more) points in a row follow a constant pattern."""
         if mean is None:
             mean = original.mean()
 
         if sigma is None:
             sigma = original.std()
 
-        copy_original = original
         segment_len = K
+        copy_original = original
+        gradient = np.gradient(copy_original)
+        chunks = self._sliding_chunker(gradient, segment_len, 1)
 
-        side_of_mean = []
-        for i in range(len(copy_original)):
-            if copy_original[i] > mean:
-                side_of_mean.append(1)
-            else:
-                side_of_mean.append(-1)
-
-        chunks =self._sliding_chunker(side_of_mean, segment_len, 1)
 
         results = []
         for i in range(len(chunks)):
-            if chunks[i].sum() == segment_len or chunks[i].sum() == (-1 * segment_len):
+            if all(abs(i)<delta for i in chunks[i]) :
                 results.append(True)
             else:
                 results.append(False)
 
-        # clean up results
+        # fill incomplete chunks with False
         results = self._clean_chunks(copy_original, results, segment_len)
 
-        return results'''
+        return results
 
 
     def main(self,original, prefix='',img_format='png'):
@@ -498,7 +530,7 @@ class NelsonRules:
             frames[i].to_csv(prefix+'frame_'+i+'.csv')
         plt.close('all')
 
-    def search_K(self,original,rule,K_list,plots=False,var_name='',prefix=''):
+    def search_K(self,original,rule,K_list,plots=False,var_name='',prefix='',dpi=300):
         '''Searches for the optimal value of K for given rule'''
         assert(type(original)!=pd.DataFrame),'original must be a pandas series object'
         if (original.dtype=='O'): # object
@@ -511,7 +543,8 @@ class NelsonRules:
         mean = original.mean()
         sigma = original.std()
         rule_dict = self.rule_dict
-        rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4, self.rule5, self.rule6, self.rule7, self.rule8]
+        rule_handle = [self.rule1, self.rule2, self.rule3, self.rule4,
+                        self.rule5, self.rule6, self.rule7, self.rule8, self.rule9]
 
 
         df = pd.DataFrame(original)
@@ -520,6 +553,6 @@ class NelsonRules:
             df['K='+str(K_list[i])] = rule_handle[rule-1](original, mean, sigma, K=K_list[i])
             information_lost['K='+str(K_list[i])] = df['K='+str(K_list[i])].sum()/len(df['K='+str(K_list[i])])
         if plots==True:
-            self.plot_rules(df, chart_type=1,run_type='search',var_name=var_name,prefix=prefix,K_list=K_list)
+            self.plot_rules_search_K(df,var_name=var_name,rule=rule,prefix=prefix,K_list=K_list)
 
         return df,information_lost

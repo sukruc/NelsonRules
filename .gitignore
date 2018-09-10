@@ -2,5 +2,5 @@
 *.csv
 *.pdf
 *.pyc
-!rules_x3.png
-!last_x4.png
+!search_K.png
+!apply_rules.png

@@ -19,7 +19,13 @@ df={}
 
 #looping through whole data frame:
 for col in data.columns:
-    df[col],info_lost[col]=nr.search_K(data[col],var_name=col,rule=2,K_list=range(8,22),plots=False) # Searches for K within range 8-22 for Rule 2, doesn't output plots
+    df[col],info_lost[col]=nr.search_K(data[col],
+                                        var_name=col,
+                                        rule=9,
+                                        K_list=range(8,22),
+                                        plots=True,
+                                        prefix='sK',
+                                        dpi=200) # Searches for K within range 8-22 for Rule 9, outputs plots
     print(col)
 plt.close('all')
 
