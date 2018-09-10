@@ -17,8 +17,17 @@ data = pd.read_csv('data.csv')
 info_lost={}
 df={}
 
-
+#looping through whole data frame:
 for col in data.columns:
     df[col],info_lost[col]=nr.search_K(data[col],var_name=col,rule=2,K_list=range(8,22),plots=False) # Searches for K within range 8-22 for Rule 2, doesn't output plots
     print(col)
 plt.close('all')
+
+#to retrieve the percentage of data loss for a given K (i.e. 12), use:
+#>>>info_lost[col]['K=12']
+
+#to retrieve results of different constants for a column, use:
+#>>>df[col]
+
+#or to retrieve results of a specific K value (i.e. 12), use:
+#>>>df[col]['K=12']
