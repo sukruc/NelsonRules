@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import fftpack
+from scipy.stats import trimboth, trim1
 '''https://github.com/tannerdietrich/nelsonRules'''
 
 class NelsonRules:
@@ -117,7 +119,8 @@ class NelsonRules:
 
             for i in range(len(columns)):
                axs[i].plot(data.ix[:, 0],label='Data')
-               axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',label='Violations')
+               axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',
+                markersize=0.8,label='Violations')
                #axs[i].set_title(columns[i]+' K='+str(self.rule_dict[i+1])) uncomment to activate K in title per rule
                axs[i].legend()
                print(columns[i])
@@ -180,7 +183,8 @@ class NelsonRules:
 
         for i in range(len(columns)):
            axs[i].plot(data.ix[:, 0],label='Data')
-           axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',label='Violations')
+           axs[i].plot(data.ix[:, 0][(data.ix[:, i+1] == True)], 'ro',
+                                    label='Violations',markersize=.01,mew=.01)
            #axs[i].set_title(columns[i]+' K='+str(self.rule_dict[i+1])) uncomment to activate K in title per rule
            axs[i].legend()
            print(columns[i])
@@ -285,10 +289,10 @@ class NelsonRules:
     def rule2(self,original, mean=None, sigma=None, K=9):
         """Nine (or more) points in a row are on the same side of the mean."""
         if mean is None:
-            mean = original.mean()
+            mean = np.nanmean(trim1(original,.2,tail='left'))
 
         if sigma is None:
-            sigma = original.std()
+            sigma = np.nanstd(original)
 
         copy_original = original
         segment_len = K
@@ -447,10 +451,10 @@ class NelsonRules:
         """Fifteen points in a row are all within 1 standard deviation of the mean on either side of the mean."""
 
         if mean is None:
-            mean = original.mean()
+            mean = np.nanmean(trim1(original,.15,'left'))
 
         if sigma is None:
-            sigma = original.std()
+            sigma = np.nanstd(trim1(original,.15,'left'))
 
         segment_len = K
         copy_original = original
@@ -575,6 +579,22 @@ class NelsonRules:
         results = (original > outliers_Tukey_top) |(original < outliers_Tukey_bot)
 
         return results
+
+        # TODO: Add rule 12, takes to series as input and outputs amount of lag
+
+    def find_delay(self,x,y,method='max',direction=1):
+        '''Returns amount of lag (if exists) between two series.'''
+        if method == 'max':
+            delay = x[max(x)]-y[max(y)]
+        if method == 'fft':
+            X = fftpack.fft(x)
+            Y = fftpack.fft(y)
+            Xr = -X.conjugate()
+            Yr = -Y.conjugate()
+
+
+
+        return delay
 
 
     def main(self,original, prefix='',img_format='png'):

@@ -16,7 +16,7 @@ data = pd.read_csv('data.csv')
 
 
 for col in data.columns:
-    nr.apply_rules(data[col],var_name=col,rules=[10,11])
+    nr.apply_rules(data[col],var_name=col,rules=[2,7],prefix='trim')
     print(col)
 
 
